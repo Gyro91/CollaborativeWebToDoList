@@ -1,4 +1,4 @@
-package org.gyro.collaborativewebtodolist.model;
+package org.gyro.todoapp.model;
 
 public enum TaskStatus {
     TODO,

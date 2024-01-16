@@ -1,4 +1,4 @@
-package org.gyro.collaborativewebtodolist.model;
+package org.gyro.todoapp.model;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

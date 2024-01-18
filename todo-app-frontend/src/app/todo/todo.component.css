@@ -1,0 +1,18 @@
+.form-container {
+  width: auto; /* Adjust the width as needed */
+  margin: auto; /* Centers the form container */
+  padding: 15px; /* Adds padding inside the form container */
+}
+
+.submit-button {
+  display: block;
+  width: auto; /* Adjust the width as needed */
+  margin-top: 10px; /* Adds margin at the top of the button */
+  margin-left: auto; /* Aligns button to the center */
+  margin-right: auto; /* Aligns button to the center */
+}
+
+mat-form-field {
+  width: 100%; /* Ensures full width within the form-container */
+  margin-bottom: 10px; /* Adds space below each form field */
+}

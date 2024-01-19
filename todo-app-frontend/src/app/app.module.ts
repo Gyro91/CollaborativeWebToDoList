@@ -14,6 +14,8 @@ import {MatIcon} from "@angular/material/icon";
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import {MatButton} from "@angular/material/button";
+import {ReactiveFormsModule} from "@angular/forms";
+import {DragDropModule} from '@angular/cdk/drag-drop';
 
 @NgModule({
   declarations: [
@@ -23,6 +25,7 @@ import {MatButton} from "@angular/material/button";
   imports: [
     BrowserModule,
     AppRoutingModule,
+    ReactiveFormsModule,
     BrowserAnimationsModule,
     MatToolbarModule,
     NavbarComponent,
@@ -31,7 +34,8 @@ import {MatButton} from "@angular/material/button";
     MatInputModule,
     MatFormFieldModule,
     MatIcon,
-    MatButton
+    MatButton,
+    DragDropModule
   ],
   providers: [
     provideClientHydration()

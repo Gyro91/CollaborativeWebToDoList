@@ -13,7 +13,7 @@ import {MatFormField} from "@angular/material/form-field";
 import {MatIcon} from "@angular/material/icon";
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import {MatButton} from "@angular/material/button";
+import {MatButton, MatIconButton} from "@angular/material/button";
 import {ReactiveFormsModule} from "@angular/forms";
 import {DragDropModule} from '@angular/cdk/drag-drop';
 
@@ -35,7 +35,8 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
     MatFormFieldModule,
     MatIcon,
     MatButton,
-    DragDropModule
+    DragDropModule,
+    MatIconButton
   ],
   providers: [
     provideClientHydration()

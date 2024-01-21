@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, NgZone, OnInit} from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { ITask } from "../model/task";
+import { ITask } from "../model/itask";
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from "@angular/cdk/drag-drop";
+import {TaskService, TaskStatus} from "../service/task.service";
+import {isPlatformBrowser} from "@angular/common";
+import {provideHttpClient, withFetch} from "@angular/common/http";
 
 @Component({
   selector: 'app-todo',
@@ -17,10 +20,11 @@ export class TodoComponent implements OnInit {
   updateIndex !: any;
   isEditEnabled : boolean = false;
 
-  constructor(private formBuilder: FormBuilder) { }
+  constructor(private formBuilder: FormBuilder, private taskService: TaskService, private readonly ngZone: NgZone) { }
 
   ngOnInit(): void {
     this.initializeForm();
+    this.fetchTasks();
   }
 
   initializeForm(): void {
@@ -29,6 +33,27 @@ export class TodoComponent implements OnInit {
     });
   }
 
+  fetchTasks(): void {
+    this.taskService.findAll().subscribe(task => {
+      this.ngZone.run(() => {
+        switch (task.status) {
+          case TaskStatus.TODO:
+            this.tasks.push(task);
+            break;
+          case TaskStatus.IN_PROGRESS:
+            this.inprogress.push(task);
+            break;
+          case TaskStatus.DONE:
+            this.done.push(task);
+            break;
+        }
+      });
+    }, error => {
+      console.error('Error receiving tasks:', error);
+    });
+  }
+
+
   onSubmitAddTask(): void {
     if (this.todoForm.valid) {
       this.addTask(this.todoForm.value.item);
@@ -36,19 +61,38 @@ export class TodoComponent implements OnInit {
     }
   }
 
-  addTask(item: string) {
-    this.tasks.push({ description: item, done: false });
+  addTask(description: string) {
+    const newTask: ITask = {
+      id: '',
+      version: 0,
+      description: description,
+      status: TaskStatus.TODO,
+      createdDate: new Date().toISOString(),
+      lastModifiedDate: new Date().toISOString()
+    };
+    this.taskService.addTask(newTask).subscribe(task => {
+      this.tasks.push(task);
+    });
   }
+
 
   onSubmitUpdateTask(): void {
     if (this.todoForm.valid) {
-      this.tasks[this.updateIndex].description = this.todoForm.value.item;
-      this.tasks[this.updateIndex].done = false;
+      const updatedTask = {
+        ...this.tasks[this.updateIndex],
+        description: this.todoForm.value.item
+      };
+
+      this.taskService.updateDescription(updatedTask.id, updatedTask.version, updatedTask.description) // Assuming updateTask handles full ITask updates
+        .subscribe(() => {
+          this.tasks[this.updateIndex] = updatedTask;
+          this.todoForm.reset();
+          this.isEditEnabled = false;
+          this.updateIndex = undefined;
+        });
     }
-    this.todoForm.reset();
-    this.isEditEnabled = false;
-    this.updateIndex = undefined;
   }
+
 
   onEdit(item: ITask, i: number) {
     this.todoForm.controls['item'].setValue(item.description)
@@ -57,14 +101,23 @@ export class TodoComponent implements OnInit {
   }
 
   deleteTask(i: number, status: String) {
-    if (status == "TO DO") {
-      this.tasks.splice(i, 1)
-    } else if (status == "IN PROGRESS") {
-      this.inprogress.splice(i, 1)
-    } else if (status == "DONE") {
-      this.done.splice(i, 1)
+    let taskToDelete;
+    if (status === 'TO DO') {
+      taskToDelete = this.tasks[i];
+      this.tasks.splice(i, 1);
+    } else if (status === 'IN PROGRESS') {
+      taskToDelete = this.inprogress[i];
+      this.inprogress.splice(i, 1);
+    } else if (status === 'DONE') {
+      taskToDelete = this.done[i];
+      this.done.splice(i, 1);
+    }
+
+    if (taskToDelete) {
+      this.taskService.delete(taskToDelete.id, taskToDelete.version).subscribe();
     }
   }
+
 
   drop(event: CdkDragDrop<ITask[]>) {
     if (event.previousContainer === event.container) {

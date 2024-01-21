@@ -16,6 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 import {MatButton, MatIconButton} from "@angular/material/button";
 import {ReactiveFormsModule} from "@angular/forms";
 import {DragDropModule} from '@angular/cdk/drag-drop';
+import {HttpClientModule, provideHttpClient, withFetch} from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -39,7 +40,8 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
     MatIconButton
   ],
   providers: [
-    provideClientHydration()
+    provideClientHydration(),
+    provideHttpClient(withFetch())
   ],
   bootstrap: [AppComponent]
 })

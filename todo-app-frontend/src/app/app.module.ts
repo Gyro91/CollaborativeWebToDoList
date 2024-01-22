@@ -37,7 +37,8 @@ import {HttpClientModule, provideHttpClient, withFetch} from '@angular/common/ht
     MatIcon,
     MatButton,
     DragDropModule,
-    MatIconButton
+    MatIconButton,
+    HttpClientModule
   ],
   providers: [
     provideClientHydration(),

@@ -26,7 +26,7 @@
           <div class="col-md-4">
             <div class="task-container">
               <h2 class="head-title">TO DO <span *ngIf="tasks.length > 0"> - {{tasks.length}}</span></h2>
-              <div cdkDropList [cdkDropListData]="tasks" class="task-list" (cdkDropListDropped)="drop($event)">
+              <div id="todoList" cdkDropList [cdkDropListData]="tasks" class="task-list" (cdkDropListDropped)="drop($event)">
                 <div class="task-box" *ngFor="let item of tasks; let i = index" cdkDrag>{{item.description}}
                   <div class="box">
                     <button mat-icon-button color="warn" (click)="deleteTask(i, 'TO DO')"><mat-icon>delete</mat-icon></button>
@@ -41,7 +41,7 @@
           <div class="col-md-4">
             <div class="task-container">
               <h2 class="head-title">IN PROGRESS <span *ngIf="inprogress.length > 0"> - {{inprogress.length}}</span></h2>
-              <div cdkDropList [cdkDropListData]="inprogress" class="task-list" (cdkDropListDropped)="drop($event)">
+              <div id="inProgressList" cdkDropList [cdkDropListData]="inprogress" class="task-list" (cdkDropListDropped)="drop($event)">
                 <div class="task-box" *ngFor="let item of inprogress; let i = index" cdkDrag>{{item.description}}
                   <div class="box">
                     <button mat-icon-button color="warn" (click)="deleteTask(i, 'IN PROGRESS')"><mat-icon>delete</mat-icon></button>
@@ -55,7 +55,7 @@
           <div class="col-md-4">
             <div class="task-container">
               <h2 class="head-title">DONE <span *ngIf="done.length > 0"> - {{done.length}}</span></h2>
-              <div cdkDropList [cdkDropListData]="done" class="task-list" (cdkDropListDropped)="drop($event)">
+              <div id="doneList" cdkDropList [cdkDropListData]="done" class="task-list" (cdkDropListDropped)="drop($event)">
                 <div class="task-box" *ngFor="let item of done; let i = index" cdkDrag>{{item.description}}
                   <div class="box">
                     <button mat-icon-button color="warn" (click)="deleteTask(i, 'DONE')"><mat-icon>delete</mat-icon></button>

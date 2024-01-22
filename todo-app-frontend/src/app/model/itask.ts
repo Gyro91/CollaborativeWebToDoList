@@ -8,3 +8,7 @@ export interface ITask {
   createdDate: string;
   lastModifiedDate: string;
 }
+
+export interface ITaskCreateRequest {
+  description: string;
+}

@@ -1,6 +1,6 @@
 import {Component, NgZone, OnInit} from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { ITask } from "../model/itask";
+import {ITask, ITaskCreateRequest} from "../model/itask";
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from "@angular/cdk/drag-drop";
 import {TaskService, TaskStatus} from "../service/task.service";
 import {isPlatformBrowser} from "@angular/common";
@@ -20,7 +20,8 @@ export class TodoComponent implements OnInit {
   updateIndex !: any;
   isEditEnabled : boolean = false;
 
-  constructor(private formBuilder: FormBuilder, private taskService: TaskService, private readonly ngZone: NgZone) { }
+  constructor(private formBuilder: FormBuilder, private taskService: TaskService, private readonly ngZone: NgZone) {
+  }
 
   ngOnInit(): void {
     this.initializeForm();
@@ -62,15 +63,8 @@ export class TodoComponent implements OnInit {
   }
 
   addTask(description: string) {
-    const newTask: ITask = {
-      id: '',
-      version: 0,
-      description: description,
-      status: TaskStatus.TODO,
-      createdDate: new Date().toISOString(),
-      lastModifiedDate: new Date().toISOString()
-    };
-    this.taskService.addTask(newTask).subscribe(task => {
+    const requestBody: ITaskCreateRequest = { description };
+    this.taskService.addTask(requestBody).subscribe(task => {
       this.tasks.push(task);
     });
   }
@@ -118,7 +112,6 @@ export class TodoComponent implements OnInit {
     }
   }
 
-
   drop(event: CdkDragDrop<ITask[]>) {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
@@ -129,6 +122,36 @@ export class TodoComponent implements OnInit {
         event.previousIndex,
         event.currentIndex,
       );
+
+      // Get the task that was moved
+      const task = event.container.data[event.currentIndex];
+
+      // Initialize newStatus with a default or undefined value
+      let newStatus: TaskStatus | undefined;
+
+      // Determine the new status based on the container it was moved to
+      if (event.container.id === 'todoList') {
+        newStatus = TaskStatus.TODO;
+      } else if (event.container.id === 'inProgressList') {
+        newStatus = TaskStatus.IN_PROGRESS;
+      } else if (event.container.id === 'doneList') {
+        newStatus = TaskStatus.DONE;
+      }
+
+      // Call the updateStatus service method if newStatus is defined
+      if (newStatus !== undefined) {
+        this.taskService.updateStatus(task.id, task.version, newStatus)
+          .subscribe(
+            updatedTask => {
+              // Handle the response, e.g., update the task in the UI
+            },
+            error => {
+              console.error('Error updating task status:', error);
+            }
+          );
+      }
     }
   }
+
+
 }

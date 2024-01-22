@@ -1,7 +1,10 @@
 import {Injectable, NgZone} from "@angular/core";
-import {Observable} from "rxjs";
+import {Observable, of} from "rxjs";
 import {HttpClient, provideHttpClient, withFetch} from "@angular/common/http";
-import {ITask} from "../model/itask";
+import {ITask, ITaskCreateRequest} from "../model/itask";
+import { isPlatformBrowser, isPlatformServer } from '@angular/common';
+import { Inject, PLATFORM_ID } from '@angular/core';
+
 
 @Injectable({
   providedIn: 'root'
@@ -10,40 +13,41 @@ export class TaskService {
 
   readonly baseUrl;
 
-  constructor(private readonly http: HttpClient, private readonly ngZone: NgZone) {
+  constructor(@Inject(PLATFORM_ID) private platformId: Object, private readonly http: HttpClient, private readonly ngZone: NgZone) {
     this.baseUrl = 'http://localhost:8080/tasks';
   }
 
   ngOnInit(): void {
-    provideHttpClient(withFetch());
   }
 
   findAll(): Observable<ITask> {
-    return new Observable<ITask>((subscriber) => {
+    if (isPlatformBrowser(this.platformId)) {
+      return new Observable<ITask>((subscriber) => {
+        const eventSource = new EventSource(this.baseUrl);
 
-      const eventSource = new EventSource(this.baseUrl);
+        // Process incoming messages
+        eventSource.onmessage = (event: MessageEvent) => {
+          const item = JSON.parse(event.data);
+          this.ngZone.run(() => subscriber.next(item));
+        };
 
-      // Process incoming messages
-      eventSource.onmessage = (event) => {
-        const item = JSON.parse(event.data);
-        this.ngZone.run(()=>subscriber.next(item));
-      };
-
-      // Handle errors
-      eventSource.onerror = (error) => {
-        if (eventSource.readyState === 0) {
-          // The connection has been closed by the server
-          eventSource.close();
-          subscriber.complete();
-        } else {
-          subscriber.error(error);
-        }
-      };
-    });
+        // Handle errors
+        eventSource.onerror = (error: Event) => {
+          if (eventSource.readyState === 0) {
+            eventSource.close();
+            subscriber.complete();
+          } else {
+            subscriber.error(error);
+          }
+        };
+      });
+    } else {
+      return of();
+    }
   }
 
-  addTask(description: ITask): Observable<ITask> {
-    return this.http.post<ITask>(this.baseUrl, {description});
+  addTask(requestBody: ITaskCreateRequest): Observable<ITask> {
+    return this.http.post<ITask>(this.baseUrl, requestBody);
   }
 
   findById(id: string): Observable<ITask> {

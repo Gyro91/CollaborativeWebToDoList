@@ -23,8 +23,12 @@
     "@angular/platform-server": "^17.1.0",
     "@angular/router": "^17.1.0",
     "@angular/ssr": "^17.1.0",
+    "@types/eventsource": "^1.1.15",
+    "eventsource": "^2.0.2",
     "express": "^4.18.2",
+    "ng-event-source": "^1.0.14",
     "rxjs": "~7.8.0",
+    "sse.js": "^2.2.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.3"
   },

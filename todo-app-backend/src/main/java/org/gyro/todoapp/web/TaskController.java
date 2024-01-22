@@ -6,13 +6,17 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.gyro.todoapp.exceptions.TaskNotFoundException;
 import org.gyro.todoapp.model.NewTaskItem;
 import org.gyro.todoapp.model.TaskPatchResource;
 import org.gyro.todoapp.model.TaskResource;
 import org.gyro.todoapp.model.TaskUpdateResource;
 import org.gyro.todoapp.service.TaskService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -67,10 +71,14 @@ public class TaskController {
 
     @ApiOperation("Delete an item")
     @DeleteMapping("/{id}")
-    public Mono<Void> delete(@PathVariable final String id) {
-
-        return taskService.deleteById(id);
+    public Mono<ResponseEntity<TaskResource>> delete(@PathVariable final String id) {
+        return taskService.findById(id)
+                .flatMap(task -> taskService.deleteById(id)
+                        .thenReturn(ResponseEntity.ok(task)))
+                .onErrorResume(TaskNotFoundException.class, e ->
+                        Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage())));
     }
+
 
 }
 

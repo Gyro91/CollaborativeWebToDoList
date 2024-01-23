@@ -3,8 +3,6 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {ITask, ITaskCreateRequest} from "../model/itask";
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from "@angular/cdk/drag-drop";
 import {TaskService, TaskStatus} from "../service/task.service";
-import {isPlatformBrowser} from "@angular/common";
-import {provideHttpClient, withFetch} from "@angular/common/http";
 
 @Component({
   selector: 'app-todo',
@@ -21,11 +19,13 @@ export class TodoComponent implements OnInit {
   isEditEnabled : boolean = false;
 
   constructor(private formBuilder: FormBuilder, private taskService: TaskService, private readonly ngZone: NgZone) {
+
+    this.initializeForm();
+    this.fetchTasks();
   }
 
   ngOnInit(): void {
-    this.initializeForm();
-    this.fetchTasks();
+
   }
 
   initializeForm(): void {
@@ -66,6 +66,7 @@ export class TodoComponent implements OnInit {
     const requestBody: ITaskCreateRequest = { description };
     this.taskService.addTask(requestBody).subscribe(task => {
       this.tasks.push(task);
+      console.log(task.id);
     });
   }
 
@@ -76,13 +77,17 @@ export class TodoComponent implements OnInit {
         ...this.tasks[this.updateIndex],
         description: this.todoForm.value.item
       };
-
-      this.taskService.updateDescription(updatedTask.id, updatedTask.version, updatedTask.description) // Assuming updateTask handles full ITask updates
-        .subscribe(() => {
-          this.tasks[this.updateIndex] = updatedTask;
-          this.todoForm.reset();
-          this.isEditEnabled = false;
-          this.updateIndex = undefined;
+      this.taskService.updateDescription(updatedTask.id, updatedTask.version, updatedTask.description)
+        .subscribe({
+          next: () => {
+            this.tasks[this.updateIndex] = updatedTask;
+            this.todoForm.reset();
+            this.isEditEnabled = false;
+            this.updateIndex = undefined;
+          },
+          error: (error) => {
+            this.displayError(error.message);
+          }
         });
     }
   }
@@ -108,7 +113,11 @@ export class TodoComponent implements OnInit {
     }
 
     if (taskToDelete) {
-      this.taskService.delete(taskToDelete.id, taskToDelete.version).subscribe();
+      this.taskService.delete(taskToDelete.id, taskToDelete.version).subscribe({
+        error: (err) => {
+          this.displayError(err.message);
+        }
+      });
     }
   }
 
@@ -128,7 +137,6 @@ export class TodoComponent implements OnInit {
 
       // Initialize newStatus with a default or undefined value
       let newStatus: TaskStatus | undefined;
-
       // Determine the new status based on the container it was moved to
       if (event.container.id === 'todoList') {
         newStatus = TaskStatus.TODO;
@@ -140,18 +148,19 @@ export class TodoComponent implements OnInit {
 
       // Call the updateStatus service method if newStatus is defined
       if (newStatus !== undefined) {
+        console.log(task.id);
         this.taskService.updateStatus(task.id, task.version, newStatus)
           .subscribe(
-            updatedTask => {
-              // Handle the response, e.g., update the task in the UI
-            },
-            error => {
-              console.error('Error updating task status:', error);
-            }
-          );
+            {
+              error: (err) => {
+                this.displayError(err.message);
+              }
+            });
       }
     }
   }
 
-
+  displayError(message: string): void {
+    alert(message);
+  }
 }

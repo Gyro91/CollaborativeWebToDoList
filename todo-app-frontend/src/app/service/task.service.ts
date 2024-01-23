@@ -1,8 +1,8 @@
 import {Injectable, NgZone} from "@angular/core";
-import {Observable, of} from "rxjs";
-import {HttpClient, provideHttpClient, withFetch} from "@angular/common/http";
+import {catchError, Observable, of, throwError} from "rxjs";
+import {HttpClient} from "@angular/common/http";
 import {ITask, ITaskCreateRequest} from "../model/itask";
-import { isPlatformBrowser, isPlatformServer } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { Inject, PLATFORM_ID } from '@angular/core';
 
 
@@ -15,9 +15,6 @@ export class TaskService {
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object, private readonly http: HttpClient, private readonly ngZone: NgZone) {
     this.baseUrl = 'http://localhost:8080/tasks';
-  }
-
-  ngOnInit(): void {
   }
 
   findAll(): Observable<ITask> {
@@ -55,18 +52,31 @@ export class TaskService {
   }
 
   delete(id: string, version: number): Observable<any> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
+      catchError(err => {
+        const message = `Error: ${err.status} - ${err.statusText || ''} ${err.error?.message || err.message}`;
+        return throwError(() => new Error(message));
+      })
+    );
   }
 
   updateDescription(id: string, version: number, description: string): Observable<any> {
-    return this.http.patch<void>(`${this.baseUrl}/${id}`, {description});
+    return this.http.patch<void>(`${this.baseUrl}/${id}`, {description}).pipe(
+      catchError(err => {
+        const message = `Error: ${err.status} - ${err.statusText || ''} ${err.error?.message || err.message}`;
+        return throwError(() => new Error(message));
+      })
+    );
   }
 
   updateStatus(id: string, version: number, status: TaskStatus): Observable<any> {
-    return this.http.patch<void>(`${this.baseUrl}/${id}`, {status});
+    return this.http.patch<void>(`${this.baseUrl}/${id}`, {status}).pipe(
+      catchError(err => {
+        const message = `Error: ${err.status} - ${err.statusText || ''} ${err.error?.message || err.message}`;
+        return throwError(() => new Error(message));
+      })
+    );
   }
-
-
 
 }
 

@@ -47,19 +47,28 @@ public class TaskController {
 
     @ApiOperation("Update an existing item")
     @PutMapping(value = "/{id}")
-    public Mono<TaskResource> update(@PathVariable @NotNull final String id,
-                                     @Valid @RequestBody TaskUpdateResource taskUpdateResource) {
+    public Mono<ResponseEntity<TaskResource>> updateTask(@PathVariable @NotNull final String id,
+                                                         @Valid @RequestBody TaskUpdateResource taskUpdateResource) {
 
-        return taskService.update(id, taskUpdateResource);
+        return taskService.findById(id)
+                .flatMap(task -> taskService.update(id, taskUpdateResource)
+                        .map(ResponseEntity::ok))
+                .onErrorResume(TaskNotFoundException.class, e ->
+                        Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage())));
     }
 
-    @ApiOperation("Patch an existing item following the patch merge RCF (https://tools.ietf.org/html/rfc7386)")
+    @ApiOperation("Patch an existing item following the patch merge RFC (https://tools.ietf.org/html/rfc7386)")
     @PatchMapping(value = "/{id}")
-    public Mono<TaskResource> update(@PathVariable @NotNull final String id,
-                                     @Valid @RequestBody TaskPatchResource taskPatchResource) {
+    public Mono<ResponseEntity<TaskResource>> patchTask(@PathVariable @NotNull final String id,
+                                                        @Valid @RequestBody TaskPatchResource taskPatchResource) {
 
-        return taskService.patch(id, taskPatchResource);
+        return taskService.findById(id)
+                .flatMap(task -> taskService.patch(id, taskPatchResource)
+                        .map(ResponseEntity::ok))
+                .onErrorResume(TaskNotFoundException.class, e ->
+                        Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage())));
     }
+
 
 
     @ApiOperation("Find an item by its id")
@@ -78,7 +87,6 @@ public class TaskController {
                 .onErrorResume(TaskNotFoundException.class, e ->
                         Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage())));
     }
-
 
 }
 

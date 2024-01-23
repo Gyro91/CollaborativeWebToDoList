@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 
 import java.time.Instant;
 
@@ -20,6 +21,9 @@ public class Task {
 
     @Id
     private String id;
+
+    @Version
+    private Long version;
 
     private String description;
 

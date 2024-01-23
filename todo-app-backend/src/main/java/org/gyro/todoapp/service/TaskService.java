@@ -1,8 +1,8 @@
 package org.gyro.todoapp.service;
 
-
 import lombok.RequiredArgsConstructor;
 import org.gyro.todoapp.exceptions.TaskNotFoundException;
+import org.gyro.todoapp.exceptions.TaskVersionException;
 import org.gyro.todoapp.mapper.TaskMapper;
 import org.gyro.todoapp.model.*;
 import org.gyro.todoapp.repository.TaskRepository;
@@ -21,7 +21,6 @@ public class TaskService {
     private final TaskMapper taskMapper;
 
     public Mono<TaskResource> create(final NewTaskItem item) {
-
         return taskRepository.save(taskMapper.toModel(item))
                 .map(taskMapper::toResource);
     }
@@ -31,51 +30,47 @@ public class TaskService {
                 .map(taskMapper::toResource);
     }
 
-    public Mono<TaskResource> findById(final String id) {
-
-        return findItemById(id)
+    public Mono<TaskResource> findById(final String id, final Long version) {
+        return findTaskById(id, version)
                 .map(taskMapper::toResource);
     }
 
-    public Mono<TaskResource> update(final String id, final TaskUpdateResource itemUpdateResource) {
-
-        return findItemById(id)
-                .flatMap(item -> {
-                    taskMapper.update(itemUpdateResource, item);
-                    return taskRepository.save(item);
+    public Mono<TaskResource> update(final String id, final Long version, final TaskUpdateResource taskUpdateResource) {
+        return findTaskById(id, version)
+                .flatMap(task -> {
+                    taskMapper.update(taskUpdateResource, task);
+                    return taskRepository.save(task);
                 })
                 .map(taskMapper::toResource);
     }
 
-    @SuppressWarnings({"OptionalAssignedToNull", "OptionalGetWithoutIsPresent"})
-    public Mono<TaskResource> patch(final String id, final TaskPatchResource itemPatchResource) {
-
-        return findItemById(id)
-                .flatMap(item -> {
-                    if (itemPatchResource.getDescription() != null) {
-                        // The description has been provided in the patch
-                        item.setDescription(itemPatchResource.getDescription().get());
+    public Mono<TaskResource> patch(final String id, final Long version, final TaskPatchResource taskPatchResource) {
+        return findTaskById(id, version)
+                .flatMap(task -> {
+                    if (taskPatchResource.getDescription() != null) {
+                        task.setDescription(taskPatchResource.getDescription().get());
                     }
-
-                    if (itemPatchResource.getStatus() != null) {
-                        // The status has been provided in the patch
-                        item.setStatus(itemPatchResource.getStatus().get());
+                    if (taskPatchResource.getStatus() != null) {
+                        task.setStatus(taskPatchResource.getStatus().get());
                     }
-                    return taskRepository.save(item);
+                    return taskRepository.save(task);
                 })
                 .map(taskMapper::toResource);
     }
 
-    public Mono<Void> deleteById(final String id) {
-
-        return findItemById(id)
+    public Mono<Void> deleteById(final String id, final Long version) {
+        return findTaskById(id, version)
                 .flatMap(taskRepository::delete);
     }
 
-    private Mono<Task> findItemById(final String id) {
-
+    private Mono<Task> findTaskById(final String id, final Long expectedVersion) {
         return taskRepository.findById(id)
-                .switchIfEmpty(Mono.error(new TaskNotFoundException(id)));
+                .switchIfEmpty(Mono.error(new TaskNotFoundException(id)))
+                .flatMap(task -> {
+                    if (expectedVersion != null && !task.getVersion().equals(expectedVersion)) {
+                        return Mono.error(new TaskVersionException(String.format("Task version %d not as expected %d", expectedVersion, task.getVersion())));
+                    }
+                    return Mono.just(task);
+                });
     }
-
 }

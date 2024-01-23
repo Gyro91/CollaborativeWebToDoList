@@ -1,6 +1,6 @@
 import {Injectable, NgZone} from "@angular/core";
 import {catchError, Observable, of, throwError} from "rxjs";
-import {HttpClient} from "@angular/common/http";
+import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {ITask, ITaskCreateRequest} from "../model/itask";
 import { isPlatformBrowser } from '@angular/common';
 import { Inject, PLATFORM_ID } from '@angular/core';
@@ -52,7 +52,7 @@ export class TaskService {
   }
 
   delete(id: string, version: number): Observable<any> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
+    return this.http.delete<void>(`${this.baseUrl}/${id}`, TaskService.buildOptions(version)).pipe(
       catchError(err => {
         const message = `Error: ${err.status} - ${err.statusText || ''} ${err.error?.message || err.message}`;
         return throwError(() => new Error(message));
@@ -61,7 +61,7 @@ export class TaskService {
   }
 
   updateDescription(id: string, version: number, description: string): Observable<any> {
-    return this.http.patch<void>(`${this.baseUrl}/${id}`, {description}).pipe(
+    return this.http.patch<void>(`${this.baseUrl}/${id}`, {description}, TaskService.buildOptions(version)).pipe(
       catchError(err => {
         const message = `Error: ${err.status} - ${err.statusText || ''} ${err.error?.message || err.message}`;
         return throwError(() => new Error(message));
@@ -70,12 +70,20 @@ export class TaskService {
   }
 
   updateStatus(id: string, version: number, status: TaskStatus): Observable<any> {
-    return this.http.patch<void>(`${this.baseUrl}/${id}`, {status}).pipe(
+    return this.http.patch<void>(`${this.baseUrl}/${id}`, {status}, TaskService.buildOptions(version)).pipe(
       catchError(err => {
         const message = `Error: ${err.status} - ${err.statusText || ''} ${err.error?.message || err.message}`;
         return throwError(() => new Error(message));
       })
     );
+  }
+
+  private static buildOptions(version: number) {
+    return {
+      headers: new HttpHeaders({
+        'if-match': String(version)
+      })
+    };
   }
 
 }

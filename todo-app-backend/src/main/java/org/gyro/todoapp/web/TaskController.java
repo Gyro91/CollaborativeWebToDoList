@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.gyro.todoapp.events.Event;
+import org.gyro.todoapp.events.HeartBeat;
 import org.gyro.todoapp.exceptions.TaskNotFoundException;
 import org.gyro.todoapp.exceptions.TaskVersionException;
 import org.gyro.todoapp.model.NewTaskItem;
@@ -93,14 +94,20 @@ public class TaskController {
                         Mono.error(new ResponseStatusException(HttpStatus.PRECONDITION_FAILED, e.getMessage())));
     }
 
+
+
     @ApiOperation("Get the item event stream")
     @GetMapping(value = "events")
     public Flux<ServerSentEvent<Event>> getEventStream() {
 
-        return taskService.listenToEvents()
+        // Send a heart beat to keep the connection alive
+        final Flux<Event> beats = Flux.interval(Duration.ofSeconds(25))
+                .map(sequence -> new HeartBeat());
+
+        return Flux.merge(beats, taskService.listenToEvents())
                 .map(event -> ServerSentEvent.<Event>builder()
-                        .retry(Duration.ofSeconds(5))
-                        .event(event.getClass().getSimpleName())
-                        .data(event).build());
+                .retry(Duration.ofSeconds(5))
+                .event(event.getClass().getSimpleName())
+                .data(event).build());
     }
 }

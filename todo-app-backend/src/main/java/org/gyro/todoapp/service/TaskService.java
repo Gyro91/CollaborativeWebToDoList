@@ -20,9 +20,7 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class TaskService {
-
     private static final Sort DEFAULT_SORT = Sort.by(Sort.Order.by("lastModifiedDate"));
-
     private final TaskRepository taskRepository;
     private final TaskMapper taskMapper;
 
@@ -51,7 +49,6 @@ public class TaskService {
                 })
                 .map(taskMapper::toResource);
     }
-
     public Mono<TaskResource> patch(final String id, final Long version, final TaskPatchResource taskPatchResource) {
         return findTaskById(id, version)
                 .flatMap(task -> {
@@ -65,12 +62,10 @@ public class TaskService {
                 })
                 .map(taskMapper::toResource);
     }
-
     public Mono<Void> deleteById(final String id, final Long version) {
         return findTaskById(id, version)
                 .flatMap(taskRepository::delete);
     }
-
     private Mono<Task> findTaskById(final String id, final Long expectedVersion) {
         return taskRepository.findById(id)
                 .switchIfEmpty(Mono.error(new TaskNotFoundException(id)))
@@ -81,7 +76,6 @@ public class TaskService {
                     return Mono.just(task);
                 });
     }
-
     public Flux<Event> listenToEvents() {
         final ChangeStreamOptions changeStreamOptions = ChangeStreamOptions.builder()
                 .returnFullDocumentOnUpdate()

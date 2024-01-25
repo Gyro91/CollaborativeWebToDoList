@@ -78,7 +78,7 @@ export class TaskService {
     );
   }
 
-  listenToEvents(onSaved: (task: ITask) => void, onDeleted: (taskId: string) => void): EventSource {
+  listenToEvents(onSaved: (task: ITask) => void, onDeleted: (taskId: string) => void): EventSource | null {
     if (isPlatformBrowser(this.platformId)) {
       const eventSource = new EventSource(`${this.baseUrl}/events`);
 
@@ -106,9 +106,8 @@ export class TaskService {
       };
       return eventSource;
     } else {
-      // Handle non-browser environments or provide an alternative
-      // You might want to throw an error or return a dummy EventSource
-      return new EventSource('/'); // Placeholder, adjust as needed
+      // Handle non-browser environments
+      return null;
     }
   }
 

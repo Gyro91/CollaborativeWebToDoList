@@ -20,5 +20,25 @@ services:
     ports:
       - 8081:8081
 
+  backend:
+    build:
+      context: ./todo-app-backend
+      dockerfile: Dockerfile
+    image: my-backend-image
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: ./todo-app-frontend
+      dockerfile: Dockerfile
+    image: my-frontend-image
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
 volumes:
   mongo-data:

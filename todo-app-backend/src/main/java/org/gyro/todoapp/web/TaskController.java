@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.gyro.todoapp.events.Event;
 import org.gyro.todoapp.exceptions.TaskNotFoundException;
 import org.gyro.todoapp.exceptions.TaskVersionException;
 import org.gyro.todoapp.model.NewTaskItem;
@@ -15,10 +16,13 @@ import org.gyro.todoapp.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
 
 import static org.springframework.http.HttpHeaders.IF_MATCH;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -87,5 +91,16 @@ public class TaskController {
                         Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage())))
                 .onErrorResume(TaskVersionException.class, e ->
                         Mono.error(new ResponseStatusException(HttpStatus.PRECONDITION_FAILED, e.getMessage())));
+    }
+
+    @ApiOperation("Get the item event stream")
+    @GetMapping(value = "events")
+    public Flux<ServerSentEvent<Event>> getEventStream() {
+
+        return taskService.listenToEvents()
+                .map(event -> ServerSentEvent.<Event>builder()
+                        .retry(Duration.ofSeconds(5))
+                        .event(event.getClass().getSimpleName())
+                        .data(event).build());
     }
 }

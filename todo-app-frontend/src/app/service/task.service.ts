@@ -78,6 +78,41 @@ export class TaskService {
     );
   }
 
+  listenToEvents(onSaved: (task: ITask) => void, onDeleted: (taskId: string) => void): EventSource {
+    if (isPlatformBrowser(this.platformId)) {
+      const eventSource = new EventSource(`${this.baseUrl}/events`);
+
+      // Handle the creation and the update of items
+      eventSource.addEventListener('TaskSavedEvent', (event: MessageEvent) => {
+        console.log(event.data);
+        const task: ITask = JSON.parse(event.data).taskResource;
+        onSaved(task);
+      });
+
+      // Handle the deletion of items
+      eventSource.addEventListener('TaskDeletedEvent', (event: MessageEvent) => {
+        let taskIdObject = JSON.parse(event.data);
+        let taskId = taskIdObject.taskId;
+        onDeleted(taskId);
+      });
+
+      // Handle errors
+      eventSource.onerror = (error: Event) => {
+        if (eventSource.readyState === 0) {
+          console.error('Stream closed');
+        } else {
+          console.error(error);
+        }
+      };
+      return eventSource;
+    } else {
+      // Handle non-browser environments or provide an alternative
+      // You might want to throw an error or return a dummy EventSource
+      return new EventSource('/'); // Placeholder, adjust as needed
+    }
+  }
+
+
   private static buildOptions(version: number) {
     return {
       headers: new HttpHeaders({

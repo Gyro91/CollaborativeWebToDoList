@@ -1,12 +1,18 @@
 package org.gyro.todoapp.service;
 
+import com.mongodb.client.model.changestream.OperationType;
 import lombok.RequiredArgsConstructor;
+import org.gyro.todoapp.events.Event;
 import org.gyro.todoapp.exceptions.TaskNotFoundException;
 import org.gyro.todoapp.exceptions.TaskVersionException;
 import org.gyro.todoapp.mapper.TaskMapper;
 import org.gyro.todoapp.model.*;
 import org.gyro.todoapp.repository.TaskRepository;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.ChangeStreamOptions;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -19,6 +25,8 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskMapper taskMapper;
+
+    private final ReactiveMongoTemplate reactiveMongoTemplate;
 
     public Mono<TaskResource> create(final NewTaskItem item) {
         return taskRepository.save(taskMapper.toModel(item))
@@ -72,5 +80,20 @@ public class TaskService {
                     }
                     return Mono.just(task);
                 });
+    }
+
+    public Flux<Event> listenToEvents() {
+        final ChangeStreamOptions changeStreamOptions = ChangeStreamOptions.builder()
+                .returnFullDocumentOnUpdate()
+                .filter(Aggregation.newAggregation(
+                        Aggregation.match(Criteria.where("operationType")
+                                .in(OperationType.INSERT.getValue(),
+                                        OperationType.REPLACE.getValue(),
+                                        OperationType.UPDATE.getValue(),
+                                        OperationType.DELETE.getValue()))))
+                .build();
+
+        return reactiveMongoTemplate.changeStream("task", changeStreamOptions, Task.class)
+                .map(taskMapper::toEvent);
     }
 }

@@ -20,12 +20,13 @@ export class TodoComponent implements OnInit {
 
   constructor(private formBuilder: FormBuilder, private taskService: TaskService, private readonly ngZone: NgZone) {
 
-    this.initializeForm();
-    this.fetchTasks();
+
   }
 
   ngOnInit(): void {
-
+    this.initializeForm();
+    this.fetchTasks();
+    this.listenToTaskEvents();
   }
 
   initializeForm(): void {
@@ -54,6 +55,59 @@ export class TodoComponent implements OnInit {
     });
   }
 
+  private listenToTaskEvents(): void {
+    this.taskService.listenToEvents(
+      (task) => this.handleTaskSaved(task),
+      (taskId) => this.handleTaskDeleted(taskId)
+    );
+  }
+
+  private handleTaskSaved(task: ITask): void {
+    this.ngZone.run(() => {
+      // Update or add the task in the appropriate list
+      console.log("Updating or adding task " + task.id);
+      this.addOrUpdateTask(task);
+    });
+  }
+
+  private addOrUpdateTask(task: ITask): void {
+    // Remove the task from all lists if it exists
+    this.tasks = this.tasks.filter(t => t.id !== task.id);
+    this.inprogress = this.inprogress.filter(t => t.id !== task.id);
+    this.done = this.done.filter(t => t.id !== task.id);
+
+    // Add or re-add the task to the appropriate list based on its status
+    let targetList = this.getTaskListByStatus(task.status);
+    targetList.push(task);
+  }
+
+  private getTaskListByStatus(status: TaskStatus): ITask[] {
+    switch (status) {
+      case TaskStatus.TODO:
+        return this.tasks;
+      case TaskStatus.IN_PROGRESS:
+        return this.inprogress;
+      case TaskStatus.DONE:
+        return this.done;
+      default:
+        throw new Error(`Unknown task status: ${status}`);
+    }
+  }
+
+
+
+  private handleTaskDeleted(taskId: string): void {
+    this.ngZone.run(() => {
+      console.log('Deleting task with ID:', taskId);
+      this.deleteTaskById(taskId);
+    });
+  }
+
+  deleteTaskById(taskId: String): void {
+    this.tasks = this.tasks.filter(task => task.id !== taskId);
+    this.inprogress = this.inprogress.filter(task => task.id !== taskId);
+    this.done = this.done.filter(task => task.id !== taskId);
+  }
 
   onSubmitAddTask(): void {
     if (this.todoForm.valid) {
@@ -69,7 +123,6 @@ export class TodoComponent implements OnInit {
       console.log(task.id);
     });
   }
-
 
   onSubmitUpdateTask(): void {
     if (this.todoForm.valid) {
@@ -91,7 +144,6 @@ export class TodoComponent implements OnInit {
         });
     }
   }
-
 
   onEdit(item: ITask, i: number) {
     this.todoForm.controls['item'].setValue(item.description)

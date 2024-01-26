@@ -4,6 +4,7 @@ import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {ITask, ITaskCreateRequest} from "../model/itask";
 import { isPlatformBrowser } from '@angular/common';
 import { Inject, PLATFORM_ID } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 
 @Injectable({
@@ -11,10 +12,10 @@ import { Inject, PLATFORM_ID } from '@angular/core';
 })
 export class TaskService {
 
-  readonly baseUrl;
+  readonly baseUrl = environment.baseUrl;
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object, private readonly http: HttpClient, private readonly ngZone: NgZone) {
-    this.baseUrl = 'http://localhost:8080/tasks';
+    console.log(this.baseUrl);
   }
 
   findAll(): Observable<ITask> {
@@ -110,7 +111,6 @@ export class TaskService {
       return null;
     }
   }
-
 
   private static buildOptions(version: number) {
     return {

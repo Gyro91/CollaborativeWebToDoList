@@ -1,7 +1,6 @@
 version: "3.1"
 
 services:
-
   mongo:
     build:
       context: database
@@ -13,12 +12,16 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    networks:
+      - my-network
 
   mongo-express:
     image: mongo-express
     restart: always
     ports:
       - 8081:8081
+    networks:
+      - my-network
 
   backend:
     build:
@@ -29,6 +32,8 @@ services:
       - "8080:8080"
     depends_on:
       - mongo
+    networks:
+      - my-network
 
   frontend:
     build:
@@ -39,6 +44,12 @@ services:
       - "4200:80"
     depends_on:
       - backend
+    networks:
+      - my-network
 
 volumes:
   mongo-data:
+
+networks:
+  my-network:
+    driver: bridge

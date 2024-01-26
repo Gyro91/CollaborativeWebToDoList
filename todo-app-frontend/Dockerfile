@@ -1,7 +1,7 @@
 # Stage 1: Build the application
 FROM node:lts as build
 
-WORKDIR /todo-app-frontend
+WORKDIR /dist/src/app
 COPY package.json package-lock.json ./
 RUN npm install
 
@@ -11,6 +11,9 @@ RUN npm run build
 # Stage 2: Serve the application
 FROM nginx:alpine
 
-COPY --from=build /todo-app-frontend/dist/todo-app-frontend /usr/share/nginx/html
+RUN rm -rf  /usr/share/nginx/html/*
+COPY --from=build /dist/src/app/dist/todo-app-frontend /usr/share/nginx/html
+COPY nginx.conf  /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

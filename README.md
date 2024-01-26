@@ -47,4 +47,4 @@ A script named `build-and-package.sh` is provided at the root of the project to 
 After building and packaging, you can run the application using Docker Compose:
 
 ```bash
-docker-compose up -d
+./start.sh

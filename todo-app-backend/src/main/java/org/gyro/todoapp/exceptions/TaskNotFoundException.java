@@ -1,6 +1,7 @@
 package org.gyro.todoapp.exceptions;
 
 public class TaskNotFoundException extends Exception {
+
     public TaskNotFoundException() {
     }
 

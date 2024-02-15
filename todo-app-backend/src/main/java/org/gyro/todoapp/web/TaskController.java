@@ -94,8 +94,6 @@ public class TaskController {
                         Mono.error(new ResponseStatusException(HttpStatus.PRECONDITION_FAILED, e.getMessage())));
     }
 
-
-
     @ApiOperation("Get the item event stream")
     @GetMapping(value = "events")
     public Flux<ServerSentEvent<Event>> getEventStream() {
